@@ -37,7 +37,11 @@ class KeyboardCtrl(Controller):
         return events
 
     def get_data(self):
-        return {"keyboard_event": self.get_events()}
+        events = self.get_events()
+        if events:
+            import logging
+            logging.getLogger(__name__).warning(f"KB events: {[e['name'] for e in events]}")
+        return {"keyboard_event": events}
 
     def process_triggers(self, ctrl_data):
         commands = []

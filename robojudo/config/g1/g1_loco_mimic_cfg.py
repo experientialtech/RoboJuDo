@@ -242,3 +242,122 @@ class g1_locomimic_asap_full(G1RlLocoMimicPipelineCfg):
                     motion_length_s=motion_length_s,
                 )
             )
+
+
+# ================= g1-moves Sim2Sim Config ================= #
+
+
+@cfg_registry.register
+class g1_moves(G1RlLocoMimicPipelineCfg):
+    """
+    g1-moves BeyondMimic policies in MuJoCo sim.
+
+    Keyboard:
+        ]  = locomotion (walk with WASD, turn with QE)
+        p  = mimic mode (standing, paused)
+        z  = play motion
+        x  = pause motion
+        c  = reset motion
+        ;  = prev policy
+        '  = next policy
+        i  = reset sim
+        o  = shutdown
+
+    Joystick:
+        Select = locomotion
+        Start  = mimic mode
+        X      = play motion
+        B      = pause motion
+        Y      = reset motion
+        LB     = prev policy
+        RB     = next policy
+        A      = shutdown
+    """
+
+    robot: str = "g1"
+    env: G1MujocoEnvCfg = G1MujocoEnvCfg()
+    run_fullspeed: bool = True
+
+    ctrl: list[KeyboardCtrlCfg | JoystickCtrlCfg] = [
+        KeyboardCtrlCfg(
+            triggers={
+                "i": "[SIM_REBORN]",
+                "o": "[SHUTDOWN]",
+                "]": "[POLICY_LOCO]",
+                "p": "[POLICY_MIMIC]",
+                "z": "[MOTION_FADE_IN]",
+                "x": "[MOTION_FADE_OUT]",
+                "c": "[MOTION_RESET]",
+                ";": "[POLICY_SWITCH],LAST",
+                "'": "[POLICY_SWITCH],NEXT",
+            }
+        ),
+        JoystickCtrlCfg(
+            combination_init_buttons=[],
+            triggers={
+                "A": "[SHUTDOWN]",
+                "Back": "[POLICY_LOCO]",
+                "Start": "[POLICY_MIMIC]",
+                "X": "[MOTION_FADE_IN]",
+                "B": "[MOTION_FADE_OUT]",
+                "Y": "[MOTION_RESET]",
+                "LB": "[POLICY_SWITCH],LAST",
+                "RB": "[POLICY_SWITCH],NEXT",
+            },
+        ),
+    ]
+
+    loco_policy: G1AmoPolicyCfg = G1AmoPolicyCfg()
+
+    mimic_policies: list[G1BeyondMimicPolicyCfg] = [
+        G1BeyondMimicPolicyCfg(policy_name="B_Fence1", without_state_estimator=False),
+        G1BeyondMimicPolicyCfg(policy_name="Dance_wose", without_state_estimator=True),
+        G1BeyondMimicPolicyCfg(policy_name="Violin", without_state_estimator=False, max_timestep=500),
+        G1BeyondMimicPolicyCfg(policy_name="Waltz", without_state_estimator=False, max_timestep=850),
+    ]
+
+
+@cfg_registry.register
+class g1_moves_real(G1RlLocoMimicPipelineCfg):
+    """
+    g1-moves on real robot. Unitree controller.
+
+    Controller:
+        Select = locomotion (walk with joystick)
+        Start  = mimic mode
+        X      = play motion
+        B      = pause motion
+        Y      = reset motion
+        L1     = prev policy
+        R1     = next policy
+        A      = shutdown
+    """
+
+    robot: str = "g1"
+    env: G1RealEnvCfg = G1RealEnvCfg(
+        unitree=G1UnitreeCfg(net_if="enP8p1s0"),
+    )
+
+    ctrl: list[UnitreeCtrlCfg] = [
+        UnitreeCtrlCfg(
+            combination_init_buttons=[],
+            triggers={
+                "A": "[SHUTDOWN]",
+                "Select": "[POLICY_LOCO]",
+                "Start": "[POLICY_MIMIC]",
+                "X": "[MOTION_FADE_IN]",
+                "B": "[MOTION_FADE_OUT]",
+                "Y": "[MOTION_RESET]",
+                "L1": "[POLICY_SWITCH],LAST",
+                "R1": "[POLICY_SWITCH],NEXT",
+            },
+        ),
+    ]
+
+    loco_policy: G1AmoPolicyCfg = G1AmoPolicyCfg()
+
+    mimic_policies: list[G1BeyondMimicPolicyCfg] = [
+        G1BeyondMimicPolicyCfg(policy_name="B_Fence1", without_state_estimator=False),
+    ]
+
+    do_safety_check: bool = True
